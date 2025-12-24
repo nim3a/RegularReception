@@ -1,6 +1,7 @@
 package com.daryaftmanazam.daryaftcore.aspect;
 
 import com.daryaftmanazam.daryaftcore.annotation.RateLimit;
+import com.daryaftmanazam.daryaftcore.exception.RateLimitExceededException;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.http.HttpServletRequest;

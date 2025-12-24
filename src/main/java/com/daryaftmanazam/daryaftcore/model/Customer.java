@@ -83,4 +83,18 @@ public class Customer {
         subscriptions.remove(subscription);
         subscription.setCustomer(null);
     }
+
+    /**
+     * Helper method to get full name.
+     */
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
+
+    /**
+     * Helper method for backward compatibility.
+     */
+    public String getPhone() {
+        return phoneNumber;
+    }
 }

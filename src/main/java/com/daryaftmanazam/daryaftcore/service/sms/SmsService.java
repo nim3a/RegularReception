@@ -27,7 +27,7 @@ import java.util.Map;
  * }
  * </pre>
  */
-@Service
+@Service("smsProviderService")
 @ConditionalOnBean(SmsProvider.class)
 @Slf4j
 public class SmsService {

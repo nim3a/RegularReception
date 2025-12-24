@@ -39,12 +39,6 @@ public class SmsController {
     private final SmsService smsService;
     private final BusinessRepository businessRepository;
 
-    @Autowired(required = false)
-    public SmsController(SmsService smsService, BusinessRepository businessRepository) {
-        this.smsService = smsService;
-        this.businessRepository = businessRepository;
-    }
-
     /**
      * Check if SMS service is available.
      */
@@ -55,11 +49,11 @@ public class SmsController {
         status.put("enabled", smsService != null && smsService.isAvailable());
         
         if (smsService != null) {
-            Optional<AccountBalance> balance = smsService.getBalance();
-            balance.ifPresent(b -> {
-                status.put("balance", b.getBalance());
-                status.put("currency", b.getCurrency());
-            });
+            AccountBalance balance = smsService.getBalance();
+            if (balance != null) {
+                status.put("balance", balance.getBalance());
+                status.put("currency", balance.getCurrency());
+            }
         }
         
         return ResponseEntity.ok(status);
