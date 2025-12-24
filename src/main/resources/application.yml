@@ -1,0 +1,123 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: daryaft-core
+  
+  # H2 Database Configuration (File-based)
+  datasource:
+    url: jdbc:h2:file:./data/daryaftdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  
+  # SQL Initialization (Optional - data.sql will only run if enabled)
+  # Note: DataInitializer component runs by default
+  # To use data.sql instead, set mode to 'always' and disable DataInitializer
+  sql:
+    init:
+      mode: never  # Options: never, always, embedded
+      # mode: always  # Uncomment to use data.sql instead of DataInitializer
+      data-locations: classpath:data.sql
+      encoding: UTF-8
+      continue-on-error: false 
+  
+  # H2 Console Configuration
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+  
+  # JPA Configuration
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+  
+  # Internationalization - Persian/Farsi Support
+  web:
+    locale: fa_IR
+    locale-resolver: fixed
+  
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+  
+  # Task Scheduling Configuration
+  task:
+    scheduling:
+      pool:
+        size: 5  # Thread pool size for scheduled tasks
+      thread-name-prefix: "scheduler-"
+
+# Logging Configuration
+logging:
+  level:
+    com.daryaftmanazam.daryaftcore: DEBUG
+    com.daryaftmanazam.daryaftcore.scheduler: INFO
+    org.springframework.web: INFO
+    org.hibernate: INFO
+    org.springframework.scheduling: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# SpringDoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+    filter: true
+    display-request-duration: true
+    doc-expansion: none
+  show-actuator: false
+
+# Scheduling Configuration
+scheduler:
+  # Subscription Scheduler Settings
+  subscription:
+    overdue-check-cron: "0 0 2 * * *"  # Daily at 2 AM
+    expire-check-cron: "0 0 3 * * *"   # Daily at 3 AM
+    overdue-grace-period-days: 30      # Days before subscription expires
+  
+  # Notification Scheduler Settings
+  notification:
+    payment-reminder-cron: "0 0 9 * * *"        # Daily at 9 AM
+    pending-process-fixed-delay: 300000         # Every 5 minutes (300000 ms)
+    payment-reminder-days-before: 3             # Send reminder 3 days before payment due
+
+# SMS Configuration
+sms:
+  provider: melipayamak
+  melipayamak:
+    enabled: false  # CRITICAL: must be false by default to prevent accidental sends
+    api-key: c2d0e69c-2d62-488c-82ee-16180dd56c1b
+    username: ${SMS_USERNAME:your-username}
+    password: ${SMS_PASSWORD:your-password}
+    line-number: ${SMS_LINE_NUMBER:5000xxxx}
+  # SMS templates
+  templates:
+    reminder: "مشتری گرامی {name}، اشتراک شما تا {date} اعتبار دارد. لطفاً جهت تمدید اقدام نمایید."
+    payment-success: "پرداخت شما به مبلغ {amount} تومان با موفقیت ثبت شد. شماره تراکنش: {transactionId}"
+    payment-failed: "پرداخت شما ناموفق بود. لطفاً مجدداً تلاش کنید یا با پشتیبانی تماس بگیرید."
+    subscription-created: "اشتراک شما با موفقیت ایجاد شد. اعتبار تا {endDate}"
+
+# JWT Security Configuration
+jwt:
+  secret: ${JWT_SECRET:YourSuperSecretKeyThatIsAtLeast256BitsLongForHS256AlgorithmMustBeSecure}
+  expiration: 86400000        # 24 hours in milliseconds
+  refresh-expiration: 604800000  # 7 days in milliseconds

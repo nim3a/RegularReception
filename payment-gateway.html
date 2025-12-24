@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>درگاه پرداخت - دریافت منظم</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+min-height: 100vh;
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 20px;
+}
+
+.payment-card {
+background: white;
+border-radius: 20px;
+padding: 40px;
+max-width: 500px;
+width: 100%;
+box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.payment-header {
+text-align: center;
+margin-bottom: 30px;
+}
+
+.payment-header h1 {
+color: #667eea;
+font-size: 28px;
+margin-bottom: 10px;
+}
+
+.payment-header p {
+color: #666;
+font-size: 14px;
+}
+
+.payment-info {
+background: #f8f9fa;
+border-radius: 12px;
+padding: 20px;
+margin-bottom: 25px;
+}
+
+.info-row {
+display: flex;
+justify-content: space-between;
+padding: 12px 0;
+border-bottom: 1px solid #e0e0e0;
+}
+
+.info-row:last-child {
+border-bottom: none;
+}
+
+.info-label {
+color: #666;
+font-size: 14px;
+}
+
+.info-value {
+color: #333;
+font-weight: 600;
+font-size: 14px;
+}
+
+.amount-display {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+padding: 25px;
+border-radius: 12px;
+text-align: center;
+margin-bottom: 25px;
+}
+
+.amount-label {
+font-size: 14px;
+opacity: 0.9;
+margin-bottom: 8px;
+}
+
+.amount-value {
+font-size: 36px;
+font-weight: bold;
+}
+
+.payment-options {
+margin: 25px 0;
+}
+
+.radio-group {
+display: flex;
+flex-direction: column;
+gap: 15px;
+}
+
+.radio-option {
+display: flex;
+align-items: center;
+padding: 15px;
+border: 2px solid #e0e0e0;
+border-radius: 12px;
+cursor: pointer;
+transition: all 0.3s;
+}
+
+.radio-option:hover {
+border-color: #667eea;
+background: #f8f9ff;
+}
+
+.radio-option.selected {
+border-color: #667eea;
+background: #f8f9ff;
+}
+
+.radio-option input[type="radio"] {
+width: 20px;
+height: 20px;
+margin-left: 12px;
+cursor: pointer;
+}
+
+.radio-label {
+font-size: 16px;
+font-weight: 500;
+color: #333;
+}
+
+.radio-description {
+font-size: 13px;
+color: #666;
+margin-top: 5px;
+}
+
+.submit-btn {
+width: 100%;
+padding: 16px;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+border: none;
+border-radius: 12px;
+font-size: 18px;
+font-weight: 600;
+cursor: pointer;
+transition: transform 0.2s;
+margin-top: 20px;
+}
+
+.submit-btn:hover {
+transform: translateY(-2px);
+box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+}
+
+.submit-btn:disabled {
+opacity: 0.6;
+cursor: not-allowed;
+transform: none;
+}
+
+.cancel-btn {
+width: 100%;
+padding: 14px;
+background: white;
+color: #666;
+border: 2px solid #e0e0e0;
+border-radius: 12px;
+font-size: 16px;
+cursor: pointer;
+margin-top: 10px;
+transition: all 0.3s;
+}
+
+.cancel-btn:hover {
+border-color: #dc3545;
+color: #dc3545;
+}
+
+.loading {
+text-align: center;
+color: #666;
+margin-top: 20px;
+}
+
+.error-message {
+background: #fee;
+border: 1px solid #fcc;
+color: #c33;
+padding: 12px;
+border-radius: 8px;
+margin-bottom: 20px;
+text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="payment-card">
+<div class="payment-header">
+<h1>💳 درگاه پرداخت</h1>
+<p>شبیه‌ساز پرداخت برای محیط توسعه</p>
+</div>
+
+<div id="errorMessage" class="error-message" style="display: none;"></div>
+
+<div id="paymentDetails" class="payment-info">
+<div class="info-row">
+<span class="info-label">مشتری:</span>
+<span class="info-value" id="customerName">در حال بارگذاری...</span>
+</div>
+<div class="info-row">
+<span class="info-label">ایمیل:</span>
+<span class="info-value" id="customerEmail">-</span>
+</div>
+<div class="info-row">
+<span class="info-label">شماره تماس:</span>
+<span class="info-value" id="customerPhone">-</span>
+</div>
+<div class="info-row">
+<span class="info-label">طرح پرداخت:</span>
+<span class="info-value" id="planName">-</span>
+</div>
+<div class="info-row">
+<span class="info-label">دوره:</span>
+<span class="info-value" id="planDuration">-</span>
+</div>
+<div class="info-row">
+<span class="info-label">شماره تراکنش:</span>
+<span class="info-value" id="transactionId">-</span>
+</div>
+</div>
+
+<div class="amount-display">
+<div class="amount-label">مبلغ قابل پرداخت</div>
+<div class="amount-value" id="paymentAmount">0 تومان</div>
+</div>
+
+<div class="payment-options">
+<h3 style="margin-bottom: 15px; color: #333;">وضعیت پرداخت را انتخاب کنید:</h3>
+<div class="radio-group">
+<label class="radio-option">
+<input type="radio" name="paymentStatus" value="success" checked>
+<div>
+<div class="radio-label">✅ پرداخت موفق</div>
+<div class="radio-description">شبیه‌سازی پرداخت موفقیت‌آمیز</div>
+</div>
+</label>
+<label class="radio-option">
+<input type="radio" name="paymentStatus" value="failed">
+<div>
+<div class="radio-label">❌ پرداخت ناموفق</div>
+<div class="radio-description">شبیه‌سازی لغو یا خطای پرداخت</div>
+</div>
+</label>
+</div>
+</div>
+
+<button class="submit-btn" id="submitBtn" onclick="processPayment()">
+تأیید و ادامه
+</button>
+
+<button class="cancel-btn" onclick="cancelPayment()">
+انصراف
+</button>
+
+<div class="loading" id="loadingMessage" style="display: none;">
+در حال پردازش پرداخت...
+</div>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:8080/api';
+let transactionId = '';
+let paymentData = null;
+
+// Parse URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+transactionId = urlParams.get('transactionId');
+
+// Format number
+function formatNumber(num) {
+return new Intl.NumberFormat('fa-IR').format(num);
+}
+
+// Load payment details
+async function loadPaymentDetails() {
+if (!transactionId) {
+showError('شماره تراکنش نامعتبر است');
+return;
+}
+
+try {
+// Get payment details from backend
+const response = await fetch(`${API_BASE}/payments/details?transactionId=${transactionId}`);
+
+if (!response.ok) {
+throw new Error('خطا در دریافت اطلاعات پرداخت');
+}
+
+paymentData = await response.json();
+
+// Fill in the details
+document.getElementById('customerName').textContent = paymentData.customer.full_name;
+document.getElementById('customerEmail').textContent = paymentData.customer.email;
+document.getElementById('customerPhone').textContent = paymentData.customer.phone;
+document.getElementById('planName').textContent = paymentData.plan.name;
+document.getElementById('planDuration').textContent = `${paymentData.plan.duration} ماه`;
+document.getElementById('transactionId').textContent = transactionId;
+document.getElementById('paymentAmount').textContent = formatNumber(paymentData.amount) + ' تومان';
+
+} catch (error) {
+showError('خطا در بارگذاری اطلاعات پرداخت');
+console.error(error);
+}
+}
+
+// Process payment
+async function processPayment() {
+const selectedStatus = document.querySelector('input[name="paymentStatus"]:checked').value;
+const success = selectedStatus === 'success';
+
+// Disable button
+document.getElementById('submitBtn').disabled = true;
+document.getElementById('loadingMessage').style.display = 'block';
+
+try {
+// Simulate processing delay
+await new Promise(resolve => setTimeout(resolve, 1500));
+
+// Call verify endpoint
+const response = await fetch(
+`${API_BASE}/payments/verify-mock?transactionId=${transactionId}&success=${success}`,
+{ method: 'POST' }
+);
+
+if (!response.ok) {
+throw new Error('خطا در پردازش پرداخت');
+}
+
+const result = await response.json();
+
+// Redirect to dashboard with result
+const redirectUrl = success
+? `dashboard.html?paymentSuccess=true&transactionId=${transactionId}`
+: `dashboard.html?paymentSuccess=false&message=${encodeURIComponent(result.message)}`;
+
+window.location.href = redirectUrl;
+
+} catch (error) {
+showError('خطا در پردازش پرداخت');
+document.getElementById('submitBtn').disabled = false;
+document.getElementById('loadingMessage').style.display = 'none';
+}
+}
+
+// Cancel payment
+function cancelPayment() {
+if (confirm('آیا مطمئن هستید که می‌خواهید پرداخت را لغو کنید؟')) {
+window.location.href = 'dashboard.html?paymentCancelled=true';
+}
+}
+
+// Show error
+function showError(message) {
+const errorDiv = document.getElementById('errorMessage');
+errorDiv.textContent = message;
+errorDiv.style.display = 'block';
+}
+
+// Handle radio selection styling
+document.querySelectorAll('.radio-option').forEach(option => {
+option.addEventListener('click', function() {
+document.querySelectorAll('.radio-option').forEach(opt => {
+opt.classList.remove('selected');
+});
+this.classList.add('selected');
+this.querySelector('input[type="radio"]').checked = true;
+});
+});
+
+// Load details on page load
+window.addEventListener('DOMContentLoaded', loadPaymentDetails);
+</script>
+</body>
+</html>

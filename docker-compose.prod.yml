@@ -1,0 +1,155 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: daryaft-postgres-prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-daryaftdb}
+      POSTGRES_USER: ${POSTGRES_USER:-daryaftuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+      TZ: Asia/Tehran
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+      - ./backup:/backup
+      - ./database-migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - daryaft-network-prod
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-daryaftuser} -d ${POSTGRES_DB:-daryaftdb}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: target/*.jar
+    container_name: daryaft-app-prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-daryaftdb}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-daryaftuser}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_SHOW_SQL: false
+      SERVER_PORT: 8080
+      
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      
+      # SMS Configuration
+      SMS_ENABLED: ${SMS_ENABLED:-false}
+      SMS_PROVIDER: ${SMS_PROVIDER:-kavenegar}
+      SMS_API_KEY: ${SMS_API_KEY}
+      SMS_SENDER: ${SMS_SENDER}
+      
+      # Rate Limiting
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+      RATE_LIMIT_LOGIN_REQUESTS: ${RATE_LIMIT_LOGIN_REQUESTS:-5}
+      RATE_LIMIT_LOGIN_DURATION: ${RATE_LIMIT_LOGIN_DURATION:-1}
+      RATE_LIMIT_API_REQUESTS: ${RATE_LIMIT_API_REQUESTS:-100}
+      RATE_LIMIT_API_DURATION: ${RATE_LIMIT_API_DURATION:-1}
+      
+      # Logging
+      LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
+      LOGGING_LEVEL_COM_DARYAFTMANAZAM: ${LOGGING_LEVEL_APP:-INFO}
+      LOGGING_FILE_NAME: /var/log/daryaft/application.log
+      LOGGING_FILE_MAX_SIZE: 10MB
+      LOGGING_FILE_MAX_HISTORY: 3
+      LOGGING_PATTERN_CONSOLE: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+      LOGGING_PATTERN_FILE: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+      
+      # Timezone
+      TZ: Asia/Tehran
+      
+      # JVM Options
+      JAVA_OPTS: "-Xms512m -Xmx768m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Djava.security.egd=file:/dev/./urandom"
+    volumes:
+      - app_logs_prod:/var/log/daryaft
+      - ./data:/app/data:ro
+    networks:
+      - daryaft-network-prod
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nginx:
+    image: nginx:alpine
+    container_name: daryaft-nginx-prod
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+    networks:
+      - daryaft-network-prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  daryaft-network-prod:
+    driver: bridge
+
+volumes:
+  postgres_data_prod:
+    driver: local
+  app_logs_prod:
+    driver: local
