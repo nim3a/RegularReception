@@ -1,53 +1,68 @@
 #!/bin/bash
 
-# ============================================
-# Deployment Script for DaryaftCore Application
-# ============================================
-# This script automates the deployment process:
-# - Pulls latest code from Git
-# - Rebuilds Docker images
-# - Restarts containers
-# - Performs health checks
-# ============================================
+################################################################################
+# RegularReception Production Deployment Script
+# Description: Automated deployment script for production environment
+# Author: DevOps Team
+# Version: 1.0.0
+################################################################################
 
-set -e  # Exit immediately if a command exits with a non-zero status
+set -e  # Exit on error
+set -u  # Exit on undefined variable
 
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Configuration
+PROJECT_NAME="regularreception"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+ENV_FILE="${PROJECT_DIR}/.env.prod"
+BACKUP_DIR="${PROJECT_DIR}/backups"
+LOG_FILE="${PROJECT_DIR}/deployment.log"
 
 # Function to print colored messages
 print_info() {
-    echo -e "${GREEN}ℹ️  $1${NC}"
-}
-
-print_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
-
-print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${BLUE}[INFO]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN}[SUCCESS]${NC} $1" | tee -a "$LOG_FILE"
 }
 
-# Function to check if .env file exists and load it
-load_env() {
-    if [ ! -f .env ]; then
-        print_error ".env file not found!"
-        print_info "Please create a .env file with required environment variables"
-        exit 1
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1" | tee -a "$LOG_FILE"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE"
+}
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to check prerequisites
+check_prerequisites() {
+    print_info "Checking prerequisites..."
+    
+    local missing_deps=()
+    
+    if ! command_exists docker; then
+        missing_deps+=("docker")
     fi
     
-    print_info "Loading environment variables from .env file..."
-    export $(cat .env | grep -v '^#' | xargs)
+    if ! command_exists docker-compose; then
+        missing_deps+=("docker-compose")
+    fi
     
-    # Validate required variables
-    required_vars=("POSTGRES_DB" "POSTGRES_USER" "POSTGRES_PASSWORD")
+    if ! command_exists mvn; then
+        missing_deps+=("maven")
     for var in "${required_vars[@]}"; do
         if [ -z "${!var}" ]; then
             print_error "Required environment variable $var is not set in .env file"
