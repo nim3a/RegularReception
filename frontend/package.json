@@ -1,0 +1,29 @@
+{
+  "name": "regularreception-frontend",
+  "version": "1.0.0",
+  "description": "RegularReception Frontend - Subscription Management System",
+  "main": "public/index.html",
+  "scripts": {
+    "start": "python -m http.server 3000 --directory public",
+    "serve": "python -m http.server 3000 --directory public",
+    "build": "echo 'Static HTML - No build needed'",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "subscription",
+    "payment",
+    "management",
+    "persian",
+    "farsi"
+  ],
+  "author": "Nim3a",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nim3a/RegularReception.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nim3a/RegularReception/issues"
+  },
+  "homepage": "https://github.com/nim3a/RegularReception#readme"
+}
